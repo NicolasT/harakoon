@@ -19,7 +19,7 @@ module Network.Arakoon.Client (
     ) where
 
 import Data.Word
-import Data.Serialize (Result(..), runGetPartial, runPutLazy)
+import Data.Serialize (Result(..), runGetPartial, runPut, runPutLazy)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 
@@ -39,9 +39,8 @@ sendPrologue :: MonadIO m
              -> ClusterId  -- ^ Identifier of the cluster we expect to be talking to
              -> ProtocolVersion  -- ^ Protocol version
              -> m ()
-sendPrologue s n v = liftIO $ do
-    let p = runPutLazy $ prologue n v
-    LS.sendAll s p
+sendPrologue s n v = liftIO $
+    S.sendAll s $ runPut $ prologue n v
 
 runCommand :: (Response a, MonadIO m)
            => Socket
