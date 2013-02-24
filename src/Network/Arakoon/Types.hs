@@ -50,6 +50,16 @@ data Command a where
     Get :: Bool -> Key -> Command Value
     Set :: Key -> Value -> Command ()
     Exists :: Bool -> Key -> Command Bool
+    ExpectProgressPossible :: Command Bool
+    MultiGet :: Bool -> [Key] -> Command [Value]
+    Delete :: Key -> Command ()
+    Range :: Bool -> Maybe Key -> Bool -> Maybe Key -> Bool -> Word32 -> Command [Key]
+    RangeEntries :: Bool -> Maybe Key -> Bool -> Maybe Key -> Bool -> Word32 -> Command [(Key, Value)]
+    Prefix :: Bool -> Key -> Word32 -> Command [Key]
+    TestAndSet :: Key -> Maybe Value -> Maybe Value -> Command (Maybe Value)
+    RevRangeEntries :: Bool -> Maybe Key -> Bool -> Maybe Key -> Bool -> Word32 -> Command [(Key, Value)]
+    AssertExists :: Bool -> Key -> Command ()
+    DeletePrefix :: Key -> Command Word32
 
 deriving instance Show (Command a)
 deriving instance Eq (Command a)
@@ -61,6 +71,16 @@ putCommand c = case c of
     Get d k -> putC 0x08 >> put d >> put k
     Set k v -> putC 0x09 >> put k >> put v
     Exists d k -> putC 0x07 >> put d >> put k
+    ExpectProgressPossible -> putC 0x12
+    MultiGet d k -> putC 0x11 >> put d >> put k
+    Delete k -> putC 0x0a >> put k
+    Range d f fi t ti l -> putC 0x0b >> put d >> put f >> put fi >> put t >> put ti >> put l
+    RangeEntries d f fi t ti l -> putC 0x0f >> put d >> put f >> put fi >> put t >> put ti >> put l
+    Prefix d k l -> putC 0x0c >> put d >> put k >> put l
+    TestAndSet k tv sv -> putC 0x0d >> put k >> put tv >> put sv
+    RevRangeEntries d f fi t ti l -> putC 0x23 >> put d >> put f >> put fi >> put t >> put ti >> put l
+    AssertExists d k -> putC 0x29 >> put d >> put k
+    DeletePrefix k -> putC 0x27 >> put k
   where
     putC :: Putter CommandId
     putC = put

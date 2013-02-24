@@ -3,9 +3,12 @@ module Network.Arakoon.Serialize (
     , Response(..)
     ) where
 
+import Data.Word
 import Data.Serialize hiding (get, put)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
+
+import Control.Applicative
 
 class Response a where
     get :: Get a
@@ -58,3 +61,24 @@ instance Response Bool where
 instance Argument Bool where
     put b = putWord8 $ if b then 1 else 0
     {-# INLINE put #-}
+
+instance Response Word32 where
+    get = getWord32le
+
+instance Argument Word32 where
+    put = putWord32le
+
+instance Response a => Response [a] where
+    get = getWord32le >>= loop []
+      where
+        loop acc c = case c of
+            0 -> return acc
+            c' -> do
+                v <- get
+                loop (v : acc) (c' - 1)
+
+instance Argument a => Argument [a] where
+    put l = putWord32le (fromIntegral $ length l) >> mapM_ put l
+
+instance (Response a, Response b) => Response (a, b) where
+    get = (,) <$> get <*> get
