@@ -22,28 +22,19 @@ getResponse :: Response a => Get (Either Error a)
 getResponse = do
     rc <- getWord32le
     case rc of
-        0 -> do
-            r <- get
-            return $ Right r
-        n -> do
-            l <- getWord32le
-            s <- getLazyByteString $ fromIntegral l
-            return $ Left $ parseError n s
+        0 -> Right `fmap` get
+        n -> (Left . parseError n) `fmap` get
 {-# INLINE getResponse #-}
 
 class Response a where
     get :: Get a
 
 instance Response LBS.ByteString where
-    get = do
-        l <- getWord32le
-        getLazyByteString $ fromIntegral l
+    get = getWord32le >>= getLazyByteString . fromIntegral
     {-# INLINE get #-}
 
 instance Response BS.ByteString where
-    get = do
-        l <- getWord32le
-        getByteString $ fromIntegral l
+    get = getWord32le >>= getByteString . fromIntegral
     {-# INLINE get #-}
 
 instance Response () where
@@ -55,7 +46,5 @@ instance Response a => Response (Maybe a) where
         tag <- getWord8
         case tag of
             0 -> return Nothing
-            _ -> do
-                v <- get
-                return $ Just v
+            _ -> Just `fmap` get
     {-# INLINE get #-}
