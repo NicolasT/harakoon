@@ -6,18 +6,20 @@ module Network.Arakoon.Types (
     , ClusterId
     , ClientId
     , ProtocolVersion
+    , CommandId
     , Command(..)
     , putCommand
     , Error(..)
     , parseError
     ) where
 
+import Data.Bits
 import Data.Word
-import Data.Serialize
+import Data.Serialize (Putter, putWord32le)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 
-import Network.Arakoon.Protocol.Utils
+import Network.Arakoon.Serialize
 
 type NodeName = BS.ByteString
 type Key = LBS.ByteString
@@ -26,25 +28,43 @@ type ClusterId = BS.ByteString
 type ClientId = BS.ByteString
 type ProtocolVersion = Word32
 
+newtype CommandId = CommandId Word16
+  deriving (Show, Read, Eq)
+instance Num CommandId where
+    fromInteger = CommandId . fromInteger
+    (+) = undefined
+    (*) = undefined
+    abs = undefined
+    signum = undefined
+
+instance Argument CommandId where
+    put (CommandId c) = putWord32le $ fromIntegral c .|. mask
+      where
+        mask = 0xb1ff0000
+        {-# INLINE mask #-}
+    {-# INLINE put #-}
+
 data Command a where
     Ping :: ClientId -> ClusterId -> Command LBS.ByteString
     WhoMaster :: Command (Maybe NodeName)
     Get :: Bool -> Key -> Command Value
     Set :: Key -> Value -> Command ()
+    Exists :: Bool -> Key -> Command Bool
 
 deriving instance Show (Command a)
 deriving instance Eq (Command a)
 
 putCommand :: Putter (Command a)
 putCommand c = case c of
-    Ping a b -> putCommandId 0x01 >> putBS a >> putBS b
-    WhoMaster -> putCommandId 0x02
-    Get d k -> putCommandId 0x08 >> putBool d >> putLBS k
-    Set k v -> putCommandId 0x09 >> putLBS k >> putLBS v
+    Ping a b -> putC 0x01 >> put a >> put b
+    WhoMaster -> putC 0x02
+    Get d k -> putC 0x08 >> put d >> put k
+    Set k v -> putC 0x09 >> put k >> put v
+    Exists d k -> putC 0x07 >> put d >> put k
   where
-    putBool :: Bool -> Put
-    putBool b = putWord8 $ if b then 1 else 0
-    {-# INLINE putBool #-}
+    putC :: Putter CommandId
+    putC = put
+    {-# INLINE putC #-}
 
 data Error = Success
            | NoMagic LBS.ByteString

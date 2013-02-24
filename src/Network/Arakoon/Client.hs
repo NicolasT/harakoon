@@ -5,9 +5,10 @@ module Network.Arakoon.Client (
     , whoMaster
     , get
     , set
+    , exists
     ) where
 
-import Data.Serialize hiding (get)
+import Data.Serialize (Result(..), runGetPartial, runPutLazy)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 
@@ -18,7 +19,8 @@ import qualified Network.Socket.ByteString as S
 import qualified Network.Socket.ByteString.Lazy as LS
 
 import Network.Arakoon.Types
-import Network.Arakoon.Protocol hiding (get)
+import Network.Arakoon.Protocol
+import Network.Arakoon.Serialize hiding (get)
 
 sendPrologue :: MonadIO m => Socket -> ClusterId -> ProtocolVersion -> m ()
 sendPrologue s n v = liftIO $ do
@@ -48,3 +50,5 @@ get :: MonadIO m => Socket -> Bool -> Key -> m (Either Error Value)
 get s d k = runCommand s $ Get d k
 set :: MonadIO m => Socket -> Key -> Value -> m (Either Error ())
 set s k v = runCommand s $ Set k v
+exists :: MonadIO m => Socket -> Bool -> Key -> m (Either Error Bool)
+exists s d k = runCommand s $ Exists d k

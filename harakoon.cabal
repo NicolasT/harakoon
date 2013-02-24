@@ -19,7 +19,7 @@ Library
   Exposed-Modules:     Network.Arakoon.Client
   Other-Modules:       Network.Arakoon.Types
                      , Network.Arakoon.Protocol
-                     , Network.Arakoon.Protocol.Utils
+                     , Network.Arakoon.Serialize
   Build-Depends:       base >= 4 && < 5
                      , transformers
                      , bytestring
