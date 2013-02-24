@@ -21,11 +21,17 @@ import qualified Data.ByteString.Lazy as LBS
 
 import Network.Arakoon.Serialize
 
+-- | Identifier of a node
 type NodeName = BS.ByteString
+-- | Type alias for keys
 type Key = LBS.ByteString
+-- | Type alias for values
 type Value = LBS.ByteString
+-- | Identifier of a cluster
 type ClusterId = BS.ByteString
+-- | Identifier of a client
 type ClientId = BS.ByteString
+-- | Protocol version
 type ProtocolVersion = Word32
 
 newtype CommandId = CommandId Word16
@@ -86,18 +92,19 @@ putCommand c = case c of
     putC = put
     {-# INLINE putC #-}
 
-data Error = Success
-           | NoMagic LBS.ByteString
-           | TooManyDeadNodes LBS.ByteString
-           | NoHello LBS.ByteString
-           | NotMaster LBS.ByteString
-           | NotFound LBS.ByteString
-           | WrongCluster LBS.ByteString
-           | AssertionFailed LBS.ByteString
-           | ReadOnly LBS.ByteString
-           | NurseryRangeError LBS.ByteString
-           | Unknown LBS.ByteString
-           | ClientParseError String
+-- | Return codes
+data Error = Success  -- ^ Success
+           | NoMagic LBS.ByteString  -- ^ Magic doesn't match
+           | TooManyDeadNodes LBS.ByteString  -- ^ Too many dead nodes
+           | NoHello LBS.ByteString  -- ^ Client didn't send a 'hello' command
+           | NotMaster LBS.ByteString  -- ^ Node is not master
+           | NotFound LBS.ByteString  -- ^ Key not found
+           | WrongCluster LBS.ByteString  -- ^ Wrong cluster identifier
+           | AssertionFailed LBS.ByteString  -- ^ Assertion failed
+           | ReadOnly LBS.ByteString  -- ^ Node is read-only
+           | NurseryRangeError LBS.ByteString  -- ^ Request outside nursery range
+           | Unknown LBS.ByteString  -- ^ Unknown return code
+           | ClientParseError String  -- ^ Response parsing failure
   deriving (Show, Read, Eq)
 
 parseError :: Word32 -> LBS.ByteString -> Error
