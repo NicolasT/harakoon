@@ -13,9 +13,8 @@ module Network.Arakoon.Types (
     , parseError
     ) where
 
-import Data.Bits
 import Data.Word
-import Data.Serialize (Putter, putWord32le)
+import Data.Serialize (Put, Putter)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 
@@ -34,21 +33,7 @@ type ClientId = BS.ByteString
 -- | Protocol version
 type ProtocolVersion = Word32
 
-newtype CommandId = CommandId Word16
-  deriving (Show, Read, Eq)
-instance Num CommandId where
-    fromInteger = CommandId . fromInteger
-    (+) = undefined
-    (*) = undefined
-    abs = undefined
-    signum = undefined
-
-instance Argument CommandId where
-    put (CommandId c) = putWord32le $ fromIntegral c .|. mask
-      where
-        mask = 0xb1ff0000
-        {-# INLINE mask #-}
-    {-# INLINE put #-}
+type CommandId = Word32
 
 data Command a where
     Ping :: ClientId -> ClusterId -> Command LBS.ByteString
@@ -72,25 +57,41 @@ deriving instance Eq (Command a)
 
 putCommand :: Putter (Command a)
 putCommand c = case c of
-    Ping a b -> putC 0x01 >> put a >> put b
-    WhoMaster -> putC 0x02
-    Get d k -> putC 0x08 >> put d >> put k
-    Set k v -> putC 0x09 >> put k >> put v
-    Exists d k -> putC 0x07 >> put d >> put k
-    ExpectProgressPossible -> putC 0x12
-    MultiGet d k -> putC 0x11 >> put d >> put k
-    Delete k -> putC 0x0a >> put k
-    Range d f fi t ti l -> putC 0x0b >> put d >> put f >> put fi >> put t >> put ti >> put l
-    RangeEntries d f fi t ti l -> putC 0x0f >> put d >> put f >> put fi >> put t >> put ti >> put l
-    Prefix d k l -> putC 0x0c >> put d >> put k >> put l
-    TestAndSet k tv sv -> putC 0x0d >> put k >> put tv >> put sv
-    RevRangeEntries d f fi t ti l -> putC 0x23 >> put d >> put f >> put fi >> put t >> put ti >> put l
-    AssertExists d k -> putC 0x29 >> put d >> put k
-    DeletePrefix k -> putC 0x27 >> put k
+    Ping a b -> put2 0x01 a b
+    WhoMaster -> put0 0x02
+    Exists d k -> put2 0x07 d k
+    Get d k -> put2 0x08 d k
+    Set k v -> put2 0x09 k v
+    MultiGet d k -> put2 0x11 d k
+    ExpectProgressPossible -> put0 0x12
+    Delete k -> put1 0x0a k
+    Range d f fi t ti l -> put6 0x0b d f fi t ti l
+    Prefix d k l -> put3 0x0c d k l
+    TestAndSet k tv sv -> put3 0x0d k tv sv
+    RangeEntries d f fi t ti l -> put6 0x0f d f fi t ti l
+    RevRangeEntries d f fi t ti l -> put6 0x23 d f fi t ti l
+    DeletePrefix k -> put1 0x27 k
+    AssertExists d k -> put2 0x29 d k
   where
     putC :: Putter CommandId
-    putC = put
+    putC = putCommandId
     {-# INLINE putC #-}
+    put0 :: Putter CommandId
+    put0 = putC
+    {-# INLINE put0 #-}
+    put1 :: Argument a => CommandId -> a -> Put
+    put1 i a = putC i >> put a
+    {-# INLINE put1 #-}
+    put2 :: (Argument a, Argument b) => CommandId -> a -> b -> Put
+    put2 i a1 a2 = putC i >> put a1 >> put a2
+    {-# INLINE put2 #-}
+    put3 :: (Argument a, Argument b, Argument c) => CommandId -> a -> b -> c -> Put
+    put3 i a1 a2 a3 = putC i >> put a1 >> put a2 >> put a3
+    {-# INLINE put3 #-}
+    put6 :: (Argument a, Argument b, Argument c, Argument d, Argument e, Argument f) => CommandId -> a -> b -> c -> d -> e -> f -> Put
+    put6 i a1 a2 a3 a4 a5 a6 = putC i >> put a1 >> put a2 >> put a3 >> put a4 >> put a5 >> put a6
+    {-# INLINE put6 #-}
+
 
 -- | Return codes
 data Error = Success  -- ^ Success

@@ -10,7 +10,7 @@ import Network.Arakoon.Serialize
 
 prologue :: ClusterId -> ProtocolVersion -> Put
 prologue n v = do
-    put (0x00 :: CommandId)
+    putCommandId (0x00 :: CommandId)
     putWord32le v
     put n
 {-# INLINE prologue #-}

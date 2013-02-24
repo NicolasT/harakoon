@@ -1,14 +1,23 @@
 module Network.Arakoon.Serialize (
-      Argument(..)
+      putCommandId
+    , Argument(..)
     , Response(..)
     ) where
 
+import Data.Bits
 import Data.Word
 import Data.Serialize hiding (get, put)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 
 import Control.Applicative
+
+putCommandId :: Putter Word32
+putCommandId c = putWord32le $ c .|. mask
+  where
+    mask :: Word32
+    mask = 0xb1ff0000
+{-# INLINE putCommandId #-}
 
 class Response a where
     get :: Get a
