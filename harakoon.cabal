@@ -35,4 +35,4 @@ Executable demo
                      , network
                      , harakoon
   Hs-Source-Dirs:      bin
-  Ghc-Options:         -Wall
+  Ghc-Options:         -Wall -rtsopts
