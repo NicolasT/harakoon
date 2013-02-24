@@ -1,0 +1,38 @@
+Name:                harakoon
+Version:             0.0.0.0
+Synopsis:            A client for the Arakoon key-value store
+-- Description:         
+Homepage:            http://github.com/NicolasT/harakoon/
+
+Author:              Nicolas Trangez
+Maintainer:          ikke@nicolast.be
+Copyright:           (c) 2013, Nicolas Trangez
+License:             LGPL-2.1
+License-File:        LICENSE
+
+Category:            Network
+
+Build-Type:          Simple
+Cabal-Version:       >=1.8
+
+Library
+  Exposed-Modules:     Network.Arakoon.Client
+  Other-Modules:       Network.Arakoon.Types
+                     , Network.Arakoon.Protocol
+                     , Network.Arakoon.Protocol.Utils
+  Build-Depends:       base >= 4 && < 5
+                     , transformers
+                     , bytestring
+                     , cereal
+                     , network
+  Hs-Source-Dirs:      src
+  Ghc-Options:         -Wall
+
+Executable demo
+  Main-Is:             demo.hs
+  Build-Depends:       base >= 4 && < 5
+                     , bytestring
+                     , network
+                     , harakoon
+  Hs-Source-Dirs:      bin
+  Ghc-Options:         -Wall
