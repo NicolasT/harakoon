@@ -40,10 +40,10 @@ type ProtocolVersion = Word32
 
 type CommandId = Word32
 
-data VersionInfo = VersionInfo { versionInfoMajor :: Int32
-                               , versionInfoMinor :: Int32
-                               , versionInfoPatch :: Int32
-                               , versionInfo :: LBS.ByteString
+data VersionInfo = VersionInfo { versionInfoMajor :: {-# UNPACK #-} !Int32
+                               , versionInfoMinor :: {-# UNPACK #-} !Int32
+                               , versionInfoPatch :: {-# UNPACK #-} !Int32
+                               , versionInfo :: !LBS.ByteString
                                }
   deriving (Show)
 
