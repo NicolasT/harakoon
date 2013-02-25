@@ -93,7 +93,9 @@ instance Response a => Response [a] where
     {-# INLINE get #-}
 
 instance Argument a => Argument [a] where
-    put l = word32LE (fromIntegral $ length l) <> mconcat (map put l)
+    put l = word32LE cnt <> s
+      where
+       (cnt, s) = foldr (\e (c, m) -> (c + 1, put e <> m)) (0, mempty) l
     {-# INLINE put #-}
 
 instance (Response a, Response b) => Response (a, b) where
