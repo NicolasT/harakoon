@@ -19,6 +19,7 @@ module Network.Arakoon.Client (
     , version
     ) where
 
+import Data.Int
 import Data.Word
 import Data.Binary.Get
 import Data.Binary.Put
@@ -129,7 +130,7 @@ range :: MonadIO m
       -> Bool  -- ^ Range begin included
       -> Maybe Key  -- ^ Range end
       -> Bool  -- ^ Range end included
-      -> Word32  -- ^ Count
+      -> Int32  -- ^ Count
       -> m (Either Error [Key])
 range = command6 Range
 
@@ -141,7 +142,7 @@ rangeEntries :: MonadIO m
              -> Bool  -- ^ Range begin included
              -> Maybe Key  -- ^ Range end
              -> Bool  -- ^ Range end included
-             -> Word32  -- ^ Count
+             -> Int32  -- ^ Count
              -> m (Either Error [(Key, Value)])
 rangeEntries = command6 RangeEntries
 
@@ -150,7 +151,7 @@ prefix :: MonadIO m
        => Socket  -- ^ Client socket
        -> Bool  -- ^ Allow dirty
        -> Key  -- ^ Prefix
-       -> Word32  -- ^ Count
+       -> Int32  -- ^ Count
        -> m (Either Error [Key])
 prefix = command3 Prefix
 
@@ -171,7 +172,7 @@ revRangeEntries :: MonadIO m
                 -> Bool  -- ^ Range begin included
                 -> Maybe Key  -- ^ Range end
                 -> Bool  -- ^ Range end included
-                -> Word32  -- ^ Count
+                -> Int32  -- ^ Count
                 -> m (Either Error [(Key, Value)])
 revRangeEntries = command6 RevRangeEntries
 

@@ -58,11 +58,11 @@ data Command a where
     ExpectProgressPossible :: Command Bool
     MultiGet :: Bool -> [Key] -> Command [Value]
     Delete :: Key -> Command ()
-    Range :: Bool -> Maybe Key -> Bool -> Maybe Key -> Bool -> Word32 -> Command [Key]
-    RangeEntries :: Bool -> Maybe Key -> Bool -> Maybe Key -> Bool -> Word32 -> Command [(Key, Value)]
-    Prefix :: Bool -> Key -> Word32 -> Command [Key]
+    Range :: Bool -> Maybe Key -> Bool -> Maybe Key -> Bool -> Int32 -> Command [Key]
+    RangeEntries :: Bool -> Maybe Key -> Bool -> Maybe Key -> Bool -> Int32 -> Command [(Key, Value)]
+    Prefix :: Bool -> Key -> Int32 -> Command [Key]
     TestAndSet :: Key -> Maybe Value -> Maybe Value -> Command (Maybe Value)
-    RevRangeEntries :: Bool -> Maybe Key -> Bool -> Maybe Key -> Bool -> Word32 -> Command [(Key, Value)]
+    RevRangeEntries :: Bool -> Maybe Key -> Bool -> Maybe Key -> Bool -> Int32 -> Command [(Key, Value)]
     AssertExists :: Bool -> Key -> Command ()
     DeletePrefix :: Key -> Command Word32
     Version :: Command VersionInfo
