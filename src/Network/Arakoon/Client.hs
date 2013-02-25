@@ -22,7 +22,7 @@ module Network.Arakoon.Client (
 import Data.Int
 import Data.Word
 import Data.Binary.Get
-import Data.Binary.Put
+import Data.ByteString.Builder (toLazyByteString)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 
@@ -43,14 +43,14 @@ sendPrologue :: MonadIO m
              -> ProtocolVersion  -- ^ Protocol version
              -> m ()
 sendPrologue s n v = liftIO $
-    LS.sendAll s $ runPut $ prologue n v
+    LS.sendAll s $ toLazyByteString $ prologue n v
 
 runCommand :: (Response a, MonadIO m)
            => Socket
            -> Command a
            -> m (Either Error a)
 runCommand s c = liftIO $ do
-    LS.sendAll s $ runPut $ putCommand c
+    LS.sendAll s $ toLazyByteString $ buildCommand c
     loop $ runGetIncremental getResponse
   where
     loop p = case p of

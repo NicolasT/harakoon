@@ -3,17 +3,15 @@ module Network.Arakoon.Protocol (
     , getResponse
     ) where
 
+import Data.Monoid
 import Data.Binary.Get
-import Data.Binary.Put
+import Data.ByteString.Builder
 
 import Network.Arakoon.Types
 import Network.Arakoon.Serialize
 
-prologue :: ClusterId -> ProtocolVersion -> Put
-prologue n v = do
-    putCommandId (0x00 :: CommandId)
-    putWord32le v
-    put n
+prologue :: ClusterId -> ProtocolVersion -> Builder
+prologue n v = putCommandId (0x00 :: CommandId) <> word32LE v <> put n
 {-# INLINE prologue #-}
 
 getResponse :: Response a => Get (Either Error a)

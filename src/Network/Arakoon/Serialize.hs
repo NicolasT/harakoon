@@ -7,15 +7,16 @@ module Network.Arakoon.Serialize (
 import Data.Int
 import Data.Bits
 import Data.Word
+import Data.Monoid
 import Data.Binary.Get
-import Data.Binary.Put
+import Data.ByteString.Builder
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 
 import Control.Applicative
 
-putCommandId :: Word32 -> Put
-putCommandId c = putWord32le $ c .|. mask
+putCommandId :: Word32 -> Builder
+putCommandId c = word32LE $ c .|. mask
   where
     mask :: Word32
     mask = 0xb1ff0000
@@ -25,14 +26,14 @@ class Response a where
     get :: Get a
 
 class Argument a where
-    put :: a -> Put
+    put :: a -> Builder
 
 instance Response LBS.ByteString where
     get = getWord32le >>= getLazyByteString . fromIntegral
     {-# INLINE get #-}
 
 instance Argument LBS.ByteString where
-    put s = putWord32le (fromIntegral $ LBS.length s) >> putLazyByteString s
+    put s = word32LE (fromIntegral $ LBS.length s) <> lazyByteString s
     {-# INLINE put #-}
 
 instance Response BS.ByteString where
@@ -40,7 +41,7 @@ instance Response BS.ByteString where
     {-# INLINE get #-}
 
 instance Argument BS.ByteString where
-    put s = putWord32le (fromIntegral $ BS.length s) >> putByteString s
+    put s = word32LE (fromIntegral $ BS.length s) <> byteString s
     {-# INLINE put #-}
 
 instance Response () where
@@ -57,8 +58,8 @@ instance Response a => Response (Maybe a) where
 
 instance Argument a => Argument (Maybe a) where
     put v = case v of
-        Nothing -> putWord8 0
-        Just v' -> putWord8 1 >> put v'
+        Nothing -> word8 0
+        Just v' -> word8 1 <> put v'
     {-# INLINE put #-}
 
 instance Response Bool where
@@ -70,14 +71,16 @@ instance Response Bool where
     {-# INLINE get #-}
 
 instance Argument Bool where
-    put b = putWord8 $ if b then 1 else 0
+    put b = word8 $ if b then 1 else 0
     {-# INLINE put #-}
 
 instance Response Word32 where
     get = getWord32le
+    {-# INLINE get #-}
 
 instance Argument Word32 where
-    put = putWord32le
+    put = word32LE
+    {-# INLINE put #-}
 
 instance Response a => Response [a] where
     get = getWord32le >>= loop []
@@ -87,15 +90,20 @@ instance Response a => Response [a] where
             c' -> do
                 v <- get
                 loop (v : acc) (c' - 1)
+    {-# INLINE get #-}
 
 instance Argument a => Argument [a] where
-    put l = putWord32le (fromIntegral $ length l) >> mapM_ put l
+    put l = word32LE (fromIntegral $ length l) <> mconcat (map put l)
+    {-# INLINE put #-}
 
 instance (Response a, Response b) => Response (a, b) where
     get = (,) <$> get <*> get
+    {-# INLINE get #-}
 
 instance Argument Int32 where
-    put = putWord32le . fromIntegral
+    put = int32LE
+    {-# INLINE put #-}
 
 instance Response Int32 where
     get = fromIntegral `fmap` getWord32le
+    {-# INLINE get #-}

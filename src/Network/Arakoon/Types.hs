@@ -9,14 +9,15 @@ module Network.Arakoon.Types (
     , CommandId
     , VersionInfo(..)
     , Command(..)
-    , putCommand
+    , buildCommand
     , Error(..)
     , parseError
     ) where
 
 import Data.Int
 import Data.Word
-import Data.Binary (Put)
+import Data.Monoid
+import Data.ByteString.Builder
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 
@@ -70,8 +71,8 @@ data Command a where
 deriving instance Show (Command a)
 deriving instance Eq (Command a)
 
-putCommand :: Command a -> Put
-putCommand c = case c of
+buildCommand :: Command a -> Builder
+buildCommand c = case c of
     Ping a b -> put2 0x01 a b
     WhoMaster -> put0 0x02
     Exists d k -> put2 0x07 d k
@@ -89,23 +90,23 @@ putCommand c = case c of
     Version -> put0 0x28
     AssertExists d k -> put2 0x29 d k
   where
-    putC :: CommandId -> Put
+    putC :: CommandId -> Builder
     putC = putCommandId
     {-# INLINE putC #-}
-    put0 :: CommandId -> Put
+    put0 :: CommandId -> Builder
     put0 = putC
     {-# INLINE put0 #-}
-    put1 :: Argument a => CommandId -> a -> Put
-    put1 i a = putC i >> put a
+    put1 :: Argument a => CommandId -> a -> Builder
+    put1 i a = putC i <> put a
     {-# INLINE put1 #-}
-    put2 :: (Argument a, Argument b) => CommandId -> a -> b -> Put
-    put2 i a1 a2 = putC i >> put a1 >> put a2
+    put2 :: (Argument a, Argument b) => CommandId -> a -> b -> Builder
+    put2 i a1 a2 = putC i <> put a1 <> put a2
     {-# INLINE put2 #-}
-    put3 :: (Argument a, Argument b, Argument c) => CommandId -> a -> b -> c -> Put
-    put3 i a1 a2 a3 = putC i >> put a1 >> put a2 >> put a3
+    put3 :: (Argument a, Argument b, Argument c) => CommandId -> a -> b -> c -> Builder
+    put3 i a1 a2 a3 = putC i <> put a1 <> put a2 <> put a3
     {-# INLINE put3 #-}
-    put6 :: (Argument a, Argument b, Argument c, Argument d, Argument e, Argument f) => CommandId -> a -> b -> c -> d -> e -> f -> Put
-    put6 i a1 a2 a3 a4 a5 a6 = putC i >> put a1 >> put a2 >> put a3 >> put a4 >> put a5 >> put a6
+    put6 :: (Argument a, Argument b, Argument c, Argument d, Argument e, Argument f) => CommandId -> a -> b -> c -> d -> e -> f -> Builder
+    put6 i a1 a2 a3 a4 a5 a6 = putC i <> put a1 <> put a2 <> put a3 <> put a4 <> put a5 <> put a6
     {-# INLINE put6 #-}
 
 
