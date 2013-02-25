@@ -1,5 +1,5 @@
 module Network.Arakoon.Client (
-      ClusterId, ProtocolVersion, ClientId, Error(..), NodeName, Key, Value
+      ClusterId, ProtocolVersion, ClientId, Error(..), NodeName, Key, Value, VersionInfo(..)
     , sendPrologue
     , ping
     , whoMaster
@@ -16,6 +16,7 @@ module Network.Arakoon.Client (
     , revRangeEntries
     , assertExists
     , deletePrefix
+    , version
     ) where
 
 import Data.Word
@@ -189,6 +190,11 @@ deletePrefix :: MonadIO m
              -> m (Either Error Word32)
 deletePrefix = command1 DeletePrefix
 
+-- | Send a 'Version' command to the node
+version :: MonadIO m
+        => Socket
+        -> m (Either Error VersionInfo)
+version = command0 Version
 
 command0 :: (Response a, MonadIO m)
          => Command a

@@ -7,16 +7,20 @@ module Network.Arakoon.Types (
     , ClientId
     , ProtocolVersion
     , CommandId
+    , VersionInfo(..)
     , Command(..)
     , putCommand
     , Error(..)
     , parseError
     ) where
 
+import Data.Int
 import Data.Word
 import Data.Binary (Put)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
+
+import Control.Applicative
 
 import Network.Arakoon.Serialize
 
@@ -35,6 +39,16 @@ type ProtocolVersion = Word32
 
 type CommandId = Word32
 
+data VersionInfo = VersionInfo { versionInfoMajor :: Int32
+                               , versionInfoMinor :: Int32
+                               , versionInfoPatch :: Int32
+                               , versionInfo :: LBS.ByteString
+                               }
+  deriving (Show)
+
+instance Response VersionInfo where
+    get = VersionInfo <$> get <*> get <*> get <*> get
+
 data Command a where
     Ping :: ClientId -> ClusterId -> Command LBS.ByteString
     WhoMaster :: Command (Maybe NodeName)
@@ -51,6 +65,7 @@ data Command a where
     RevRangeEntries :: Bool -> Maybe Key -> Bool -> Maybe Key -> Bool -> Word32 -> Command [(Key, Value)]
     AssertExists :: Bool -> Key -> Command ()
     DeletePrefix :: Key -> Command Word32
+    Version :: Command VersionInfo
 
 deriving instance Show (Command a)
 deriving instance Eq (Command a)
@@ -71,6 +86,7 @@ putCommand c = case c of
     RangeEntries d f fi t ti l -> put6 0x0f d f fi t ti l
     RevRangeEntries d f fi t ti l -> put6 0x23 d f fi t ti l
     DeletePrefix k -> put1 0x27 k
+    Version -> put0 0x28
     AssertExists d k -> put2 0x29 d k
   where
     putC :: CommandId -> Put

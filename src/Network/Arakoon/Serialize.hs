@@ -4,6 +4,7 @@ module Network.Arakoon.Serialize (
     , Response(..)
     ) where
 
+import Data.Int
 import Data.Bits
 import Data.Word
 import Data.Binary.Get
@@ -92,3 +93,9 @@ instance Argument a => Argument [a] where
 
 instance (Response a, Response b) => Response (a, b) where
     get = (,) <$> get <*> get
+
+instance Argument Int32 where
+    put = putWord32le . fromIntegral
+
+instance Response Int32 where
+    get = fromIntegral `fmap` getWord32le

@@ -32,6 +32,8 @@ main = withSocketsDo $ do
             A.sendPrologue s clusterId protocolVersion
             putStr "ping: "
             A.ping s "clientid" clusterId >>= print
+            putStr "version: "
+            A.version s >>= print
             putStr "whoMaster: "
             A.whoMaster s >>= print
             putStr "set: "
