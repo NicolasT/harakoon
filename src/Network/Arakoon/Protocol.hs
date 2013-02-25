@@ -3,7 +3,8 @@ module Network.Arakoon.Protocol (
     , getResponse
     ) where
 
-import Data.Serialize hiding (get, put)
+import Data.Binary.Get
+import Data.Binary.Put
 
 import Network.Arakoon.Types
 import Network.Arakoon.Serialize

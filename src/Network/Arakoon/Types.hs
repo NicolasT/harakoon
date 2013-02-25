@@ -14,7 +14,7 @@ module Network.Arakoon.Types (
     ) where
 
 import Data.Word
-import Data.Serialize (Put, Putter)
+import Data.Binary (Put)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 
@@ -55,7 +55,7 @@ data Command a where
 deriving instance Show (Command a)
 deriving instance Eq (Command a)
 
-putCommand :: Putter (Command a)
+putCommand :: Command a -> Put
 putCommand c = case c of
     Ping a b -> put2 0x01 a b
     WhoMaster -> put0 0x02
@@ -73,10 +73,10 @@ putCommand c = case c of
     DeletePrefix k -> put1 0x27 k
     AssertExists d k -> put2 0x29 d k
   where
-    putC :: Putter CommandId
+    putC :: CommandId -> Put
     putC = putCommandId
     {-# INLINE putC #-}
-    put0 :: Putter CommandId
+    put0 :: CommandId -> Put
     put0 = putC
     {-# INLINE put0 #-}
     put1 :: Argument a => CommandId -> a -> Put

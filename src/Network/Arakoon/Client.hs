@@ -19,7 +19,8 @@ module Network.Arakoon.Client (
     ) where
 
 import Data.Word
-import Data.Serialize (Result(..), runGetPartial, runPut, runPutLazy)
+import Data.Binary.Get
+import Data.Binary.Put
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 
@@ -40,24 +41,24 @@ sendPrologue :: MonadIO m
              -> ProtocolVersion  -- ^ Protocol version
              -> m ()
 sendPrologue s n v = liftIO $
-    S.sendAll s $ runPut $ prologue n v
+    LS.sendAll s $ runPut $ prologue n v
 
 runCommand :: (Response a, MonadIO m)
            => Socket
            -> Command a
            -> m (Either Error a)
 runCommand s c = liftIO $ do
-    LS.sendAll s $ runPutLazy $ putCommand c
-    loop $ Partial $ runGetPartial getResponse
+    LS.sendAll s $ runPut $ putCommand c
+    loop $ runGetIncremental getResponse
   where
     loop p = case p of
         Partial g -> do
             d <- S.recv s 4096
             if BS.null d
                 then error "socket closed"
-                else loop $ g d
-        Done r _ -> return r
-        Fail e -> return $ Left $ ClientParseError e
+                else loop $ g $ Just d
+        Done _ _ r -> return r
+        Fail _ _ e -> return $ Left $ ClientParseError e
 {-# INLINE runCommand #-}
 
 -- | Send a 'Ping' command to the node

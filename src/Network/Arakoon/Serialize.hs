@@ -6,13 +6,14 @@ module Network.Arakoon.Serialize (
 
 import Data.Bits
 import Data.Word
-import Data.Serialize hiding (get, put)
+import Data.Binary.Get
+import Data.Binary.Put
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 
 import Control.Applicative
 
-putCommandId :: Putter Word32
+putCommandId :: Word32 -> Put
 putCommandId c = putWord32le $ c .|. mask
   where
     mask :: Word32
@@ -23,7 +24,7 @@ class Response a where
     get :: Get a
 
 class Argument a where
-    put :: Putter a
+    put :: a -> Put
 
 instance Response LBS.ByteString where
     get = getWord32le >>= getLazyByteString . fromIntegral
