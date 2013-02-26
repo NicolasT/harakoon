@@ -40,3 +40,19 @@ main = withSocketsDo $ do
             A.set s "key" "value" >>= print
             putStr "get: "
             A.get s False "key" >>= print
+            putStr "delete: "
+            A.delete s "key" >>= print
+            putStr "sequence assertExists (fails): "
+            A.sequence s [A.SequenceAssertExists "key"] >>= print
+            putStr "syncedSequence: "
+            A.syncedSequence s [ A.SequenceAssert "key" Nothing
+                               , A.SequenceSet "key" "value"
+                               , A.SequenceAssertExists "key"
+                               , A.SequenceAssert "key" (Just "value")
+                               , A.SequenceDelete "key"
+                               , A.SequenceAssert "key" Nothing
+                               , A.SequenceSet "key" "value"
+                               , A.SequenceSet "key2" "value2"
+                               ] >>= print
+            putStr "rangeEntries: "
+            A.rangeEntries s False (Just "key") True (Just "key3") True (-1) >>= print

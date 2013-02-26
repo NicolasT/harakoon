@@ -1,5 +1,6 @@
 module Network.Arakoon.Client (
-      ClusterId, ProtocolVersion, ClientId, Error(..), NodeName, Key, Value, VersionInfo(..)
+      ClusterId, ProtocolVersion, ClientId, Error(..), NodeName, Key, Value
+    , VersionInfo(..), SequenceCommand(..)
     , sendPrologue
     , ping
     , whoMaster
@@ -17,7 +18,11 @@ module Network.Arakoon.Client (
     , assertExists
     , deletePrefix
     , version
+    , sequence
+    , syncedSequence
     ) where
+
+import Prelude hiding (sequence)
 
 import Data.Int
 import Data.Word
@@ -193,9 +198,24 @@ deletePrefix = command1 DeletePrefix
 
 -- | Send a 'Version' command to the node
 version :: MonadIO m
-        => Socket
+        => Socket  -- ^ Client socket
         -> m (Either Error VersionInfo)
 version = command0 Version
+
+-- | Send a 'Sequence' command to the node
+sequence :: MonadIO m
+         => Socket  -- ^ Client socket
+         -> [SequenceCommand]  -- ^ Sequence
+         -> m (Either Error ())
+sequence = command1 Sequence
+
+-- | Send a 'SyncedSequence' command to the node
+syncedSequence :: MonadIO m
+               => Socket  -- ^ Client socket
+               -> [SequenceCommand]  -- ^ Sequence
+               -> m (Either Error ())
+syncedSequence = command1 SyncedSequence
+
 
 command0 :: (Response a, MonadIO m)
          => Command a
