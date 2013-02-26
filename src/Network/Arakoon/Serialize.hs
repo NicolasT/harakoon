@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances, BangPatterns #-}
 
 module Network.Arakoon.Serialize (
       putCommandId
@@ -22,7 +22,7 @@ import qualified Data.ByteString.Lazy as LBS
 import Control.Applicative
 
 putCommandId :: Word32 -> Builder
-putCommandId c = word32LE $ c .|. mask
+putCommandId !c = word32LE $ c .|. mask
   where
     mask :: Word32
     mask = 0xb1ff0000
@@ -91,10 +91,10 @@ instance Argument Word32 where
 instance Response a => Response [a] where
     get = getWord32le >>= loop []
       where
-        loop acc c = case c of
+        loop acc !c = case c of
             0 -> return acc
-            c' -> do
-                v <- get
+            !c' -> do
+                !v <- get
                 loop (v : acc) (c' - 1)
     {-# INLINE get #-}
 
@@ -103,7 +103,7 @@ newtype FoldableBuilder f = FoldableBuilder f
 instance (Foldable f, Argument a) => Argument (FoldableBuilder (f a)) where
     put (FoldableBuilder l) = word32LE cnt <> s
       where
-       (cnt, s) = foldr (\e (c, m) -> (c + 1, put e <> m)) (0, mempty) l
+       (!cnt, s) = foldr (\e (!c, m) -> (c + 1, put e <> m)) (0, mempty) l
     {-# INLINE put #-}
 
 instance (Response a, Response b) => Response (a, b) where
