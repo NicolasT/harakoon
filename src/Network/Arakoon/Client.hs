@@ -1,6 +1,7 @@
 module Network.Arakoon.Client (
       ClusterId, ProtocolVersion, ClientId, Error(..), NodeName, Key, Value
     , VersionInfo(..), SequenceCommand(..)
+    , FieldName, FieldValue(..), NodeStatistics(..)
     , sendPrologue
     , ping
     , whoMaster
@@ -20,6 +21,7 @@ module Network.Arakoon.Client (
     , version
     , sequence
     , syncedSequence
+    , statistics
     ) where
 
 import Prelude hiding (sequence)
@@ -41,6 +43,7 @@ import qualified Network.Socket.ByteString.Lazy as LS
 import Network.Arakoon.Types
 import Network.Arakoon.Protocol
 import Network.Arakoon.Serialize hiding (get)
+import Network.Arakoon.Statistics
 
 -- | Send the protocol prologue to a node
 sendPrologue :: MonadIO m
@@ -216,6 +219,12 @@ syncedSequence :: (MonadIO m, Foldable f)
                -> f SequenceCommand  -- ^ Sequence
                -> m (Either Error ())
 syncedSequence = command1 SyncedSequence
+
+-- | Send a 'Statistics' command to the node
+statistics :: MonadIO m
+           => Socket  -- ^ Client socket
+           -> m (Either Error NodeStatistics)
+statistics = command0 Statistics
 
 
 command0 :: (Response a, MonadIO m)

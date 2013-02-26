@@ -26,6 +26,7 @@ import qualified Data.ByteString.Lazy as LBS
 import Control.Applicative
 
 import Network.Arakoon.Serialize
+import Network.Arakoon.Statistics
 
 -- | Identifier of a node
 type NodeName = BS.ByteString
@@ -52,6 +53,7 @@ data VersionInfo = VersionInfo { versionInfoMajor :: {-# UNPACK #-} !Int32
 instance Response VersionInfo where
     get = VersionInfo <$> get <*> get <*> get <*> get
 
+
 data Command a where
     Ping :: ClientId -> ClusterId -> Command LBS.ByteString
     WhoMaster :: Command (Maybe NodeName)
@@ -71,6 +73,7 @@ data Command a where
     Version :: Command VersionInfo
     Sequence :: Foldable f => f SequenceCommand -> Command ()
     SyncedSequence :: Foldable f => f SequenceCommand -> Command ()
+    Statistics :: Command NodeStatistics
 
 buildCommand :: Command a -> Builder
 buildCommand c = case c of
@@ -82,6 +85,7 @@ buildCommand c = case c of
     Sequence s -> putSequence 0x10 (FoldableBuilder s)
     MultiGet d k -> put2 0x11 d (FoldableBuilder k)
     ExpectProgressPossible -> put0 0x12
+    Statistics -> put0 0x13
     Delete k -> put1 0x0a k
     Range d f fi t ti l -> put6 0x0b d f fi t ti l
     Prefix d k l -> put3 0x0c d k l
