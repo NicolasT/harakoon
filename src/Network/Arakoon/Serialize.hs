@@ -1,13 +1,19 @@
+{-# LANGUAGE FlexibleInstances #-}
+
 module Network.Arakoon.Serialize (
       putCommandId
     , Argument(..)
     , Response(..)
+    , FoldableBuilder(..)
     ) where
+
+import Prelude hiding (foldr)
 
 import Data.Int
 import Data.Bits
 import Data.Word
 import Data.Monoid
+import Data.Foldable (Foldable, foldr)
 import Data.Binary.Get
 import Data.ByteString.Builder
 import qualified Data.ByteString as BS
@@ -92,8 +98,10 @@ instance Response a => Response [a] where
                 loop (v : acc) (c' - 1)
     {-# INLINE get #-}
 
-instance Argument a => Argument [a] where
-    put l = word32LE cnt <> s
+newtype FoldableBuilder f = FoldableBuilder f
+
+instance (Foldable f, Argument a) => Argument (FoldableBuilder (f a)) where
+    put (FoldableBuilder l) = word32LE cnt <> s
       where
        (cnt, s) = foldr (\e (c, m) -> (c + 1, put e <> m)) (0, mempty) l
     {-# INLINE put #-}

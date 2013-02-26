@@ -56,3 +56,5 @@ main = withSocketsDo $ do
                                ] >>= print
             putStr "rangeEntries: "
             A.rangeEntries s False (Just "key") True (Just "key3") True (-1) >>= print
+            A.sequence s Nothing >>= print
+            A.sequence s (Just $ A.SequenceSet "key3" "value3") >>= print

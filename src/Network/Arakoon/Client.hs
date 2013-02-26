@@ -26,6 +26,7 @@ import Prelude hiding (sequence)
 
 import Data.Int
 import Data.Word
+import Data.Foldable (Foldable)
 import Data.Binary.Get
 import Data.ByteString.Builder (toLazyByteString)
 import qualified Data.ByteString as BS
@@ -113,10 +114,10 @@ expectProgressPossible :: MonadIO m
 expectProgressPossible = command0 ExpectProgressPossible
 
 -- | Send a 'MultiGet' command to the node
-multiGet :: MonadIO m
+multiGet :: (MonadIO m, Foldable f)
          => Socket  -- ^ Client socket
          -> Bool  -- ^ Allow dirty
-         -> [Key]  -- ^ Keys to retrieve
+         -> f Key  -- ^ Keys to retrieve
          -> m (Either Error [Value])
 multiGet = command2 MultiGet
 
@@ -203,16 +204,16 @@ version :: MonadIO m
 version = command0 Version
 
 -- | Send a 'Sequence' command to the node
-sequence :: MonadIO m
+sequence :: (MonadIO m, Foldable f)
          => Socket  -- ^ Client socket
-         -> [SequenceCommand]  -- ^ Sequence
+         -> f SequenceCommand  -- ^ Sequence
          -> m (Either Error ())
 sequence = command1 Sequence
 
 -- | Send a 'SyncedSequence' command to the node
-syncedSequence :: MonadIO m
+syncedSequence :: (MonadIO m, Foldable f)
                => Socket  -- ^ Client socket
-               -> [SequenceCommand]  -- ^ Sequence
+               -> f SequenceCommand  -- ^ Sequence
                -> m (Either Error ())
 syncedSequence = command1 SyncedSequence
 

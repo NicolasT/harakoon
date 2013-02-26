@@ -1,4 +1,4 @@
-{-# LANGUAGE GADTs, StandaloneDeriving #-}
+{-# LANGUAGE GADTs #-}
 module Network.Arakoon.Types (
       NodeName
     , Key
@@ -18,6 +18,7 @@ module Network.Arakoon.Types (
 import Data.Int
 import Data.Word
 import Data.Monoid
+import Data.Foldable (Foldable)
 import Data.ByteString.Builder
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
@@ -58,7 +59,7 @@ data Command a where
     Set :: Key -> Value -> Command ()
     Exists :: Bool -> Key -> Command Bool
     ExpectProgressPossible :: Command Bool
-    MultiGet :: Bool -> [Key] -> Command [Value]
+    MultiGet :: Foldable f => Bool -> f Key -> Command [Value]
     Delete :: Key -> Command ()
     Range :: Bool -> Maybe Key -> Bool -> Maybe Key -> Bool -> Int32 -> Command [Key]
     RangeEntries :: Bool -> Maybe Key -> Bool -> Maybe Key -> Bool -> Int32 -> Command [(Key, Value)]
@@ -68,11 +69,8 @@ data Command a where
     AssertExists :: Bool -> Key -> Command ()
     DeletePrefix :: Key -> Command Word32
     Version :: Command VersionInfo
-    Sequence :: [SequenceCommand] -> Command ()
-    SyncedSequence :: [SequenceCommand] -> Command ()
-
-deriving instance Show (Command a)
-deriving instance Eq (Command a)
+    Sequence :: Foldable f => f SequenceCommand -> Command ()
+    SyncedSequence :: Foldable f => f SequenceCommand -> Command ()
 
 buildCommand :: Command a -> Builder
 buildCommand c = case c of
@@ -81,8 +79,8 @@ buildCommand c = case c of
     Exists d k -> put2 0x07 d k
     Get d k -> put2 0x08 d k
     Set k v -> put2 0x09 k v
-    Sequence s -> putSequence 0x10 s
-    MultiGet d k -> put2 0x11 d k
+    Sequence s -> putSequence 0x10 (FoldableBuilder s)
+    MultiGet d k -> put2 0x11 d (FoldableBuilder k)
     ExpectProgressPossible -> put0 0x12
     Delete k -> put1 0x0a k
     Range d f fi t ti l -> put6 0x0b d f fi t ti l
@@ -90,7 +88,7 @@ buildCommand c = case c of
     TestAndSet k tv sv -> put3 0x0d k tv sv
     RangeEntries d f fi t ti l -> put6 0x0f d f fi t ti l
     RevRangeEntries d f fi t ti l -> put6 0x23 d f fi t ti l
-    SyncedSequence s -> putSequence 0x24 s
+    SyncedSequence s -> putSequence 0x24 (FoldableBuilder s)
     DeletePrefix k -> put1 0x27 k
     Version -> put0 0x28
     AssertExists d k -> put2 0x29 d k
@@ -114,7 +112,7 @@ buildCommand c = case c of
     put6 i a1 a2 a3 a4 a5 a6 = putC i <> put a1 <> put a2 <> put a3 <> put a4 <> put a5 <> put a6
     {-# INLINE put6 #-}
 
-    putSequence :: CommandId -> [SequenceCommand] -> Builder
+    putSequence :: Foldable f => CommandId -> FoldableBuilder (f SequenceCommand) -> Builder
     putSequence i s = putC i <> word32LE (fromIntegral $ LBS.length r) <> lazyByteString r
       where
         r = toLazyByteString $ word32LE 5 <> put s
